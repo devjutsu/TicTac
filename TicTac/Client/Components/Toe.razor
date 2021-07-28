@@ -1,0 +1,51 @@
+﻿@using TicTac.Shared
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HttpClient Http
+
+<AuthorizeView>
+    <Authorized>
+        <div><span>@context.User.Identity.Name</span> vs Player2</div>
+        <p>&nbsp;</p>
+
+        <div class="board">
+            @for (int x = 0; x < 3; x++)
+            {
+                <div class="board-column">
+                    @for (int y = 0; y < 3; y++)
+                    {
+                        <div class="gamepiece"
+                     @onclick="@(() => board.PieceClicked(x, y))">
+                            @x @y
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        <div>ololo</div>
+        <div>@_returned</div>
+        <div>uwawa</div>
+    </Authorized>
+    <NotAuthorized>
+        <LoginDisplay />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    GameBoard board = new GameBoard();
+    private string _name;
+    private string _err;
+    private string _returned;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+            _name = user.Identity.Name;
+
+        _returned = (await Http.GetFromJsonAsync<Psst>("toe")).Name;
+    }
+}
