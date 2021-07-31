@@ -11,6 +11,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using TicTac.Server.Models;
 using Microsoft.AspNetCore.Components.Authorization;
+using TicTac.Server.App.TicTacToe;
 
 namespace TicTac.Server.Controllers
 {
@@ -22,14 +23,17 @@ namespace TicTac.Server.Controllers
         private readonly ILogger<ToeController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ITicTacHub _hub;
 
-        public ToeController(ILogger<ToeController> logger, 
+        public ToeController(ILogger<ToeController> logger,
                                 UserManager<ApplicationUser> userManager,
-                                SignInManager<ApplicationUser> signInManager)
+                                SignInManager<ApplicationUser> signInManager,
+                                ITicTacHub hub)
         {
             _logger = logger;
             _userManager = userManager;
             _signInManager = signInManager;
+            _hub = hub;
         }
 
         public async Task<Psst> Get()
@@ -43,5 +47,19 @@ namespace TicTac.Server.Controllers
 
             return new Psst() { Name = name };
         }
+
+        public async Task Fire()
+        {
+            _hub.StartGame();
+        }
+
+        public void ReadyToStart()
+        {
+            // check if 2 players are ready
+            // if not ready, return to wait
+            // if both players ready, create and return game instance
+        }
+
+
     }
 }
