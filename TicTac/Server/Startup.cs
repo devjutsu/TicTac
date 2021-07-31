@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using System.Linq;
 using TicTac.Server.Data;
 using TicTac.Server.Models;
+using TicTac.Server.App.TicTacToe;
 
 namespace TicTac.Server
 {
@@ -52,6 +53,9 @@ namespace TicTac.Server
 
             services.AddControllersWithViews();
             services.AddRazorPages();
+
+            services.AddSignalR();
+            services.AddSingleton<ITicTacHub, TicTacHub>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -84,6 +88,7 @@ namespace TicTac.Server
             {
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
+                endpoints.MapHub<TicTacHub>("/tictachub");
                 endpoints.MapFallbackToFile("index.html");
             });
         }

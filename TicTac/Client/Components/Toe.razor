@@ -8,6 +8,7 @@
     <Authorized>
         <div><span>@context.User.Identity.Name</span> vs Player2</div>
         <p>&nbsp;</p>
+        <button @onclick="StartGame">Start</button>
 
         <div class="board">
             @for (int x = 0; x < 3; x++)
@@ -46,6 +47,11 @@
         if (user.Identity.IsAuthenticated)
             _name = user.Identity.Name;
 
-        _returned = (await Http.GetFromJsonAsync<Psst>("toe")).Name;
+        //_returned = (await Http.GetFromJsonAsync<Psst>("toe")).Name;
+    }
+
+    public void StartGame()
+    {
+        Console.WriteLine("trying");
     }
 }
