@@ -15,7 +15,6 @@ using TicTac.Server.App.TicTacToe;
 
 namespace TicTac.Server.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class ToeController : ControllerBase
@@ -36,21 +35,26 @@ namespace TicTac.Server.Controllers
             _hub = hub;
         }
 
+        [HttpGet("get")]
         public async Task<Psst> Get()
         {
-            var id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            _logger.LogInformation("Got it.");
 
-            var name = (await _userManager.FindByIdAsync(id)).UserName;
+            //var id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-            var user = await _userManager.GetUserAsync(HttpContext.User);
-            var bz = user?.Email;
+            //var name = (await _userManager.FindByIdAsync(id)).UserName;
 
-            return new Psst() { Name = name };
+            //var user = await _userManager.GetUserAsync(HttpContext.User);
+            //var bz = user?.Email;
+
+            return new Psst() { Name = "sampl" };
         }
 
+        [HttpGet("fire")]
         public async Task Fire()
         {
-            _hub.StartGame();
+            _logger.LogInformation("Start Game.");
+            await _hub.StartGame();
         }
 
         public void ReadyToStart()
@@ -59,7 +63,5 @@ namespace TicTac.Server.Controllers
             // if not ready, return to wait
             // if both players ready, create and return game instance
         }
-
-
     }
 }

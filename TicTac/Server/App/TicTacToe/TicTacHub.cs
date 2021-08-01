@@ -17,19 +17,21 @@ namespace TicTac.Server.App.TicTacToe
 
         public async Task StartGame()
         {
-            await _ctx.Clients.All.SendAsync("test");
+            await _ctx.Clients.All.SendAsync("StartGame", "my important message");
         }
 
-        public override Task OnConnectedAsync()
+        public override async Task OnConnectedAsync()
         {
-            Clients.All.SendAsync("broadcastMessage", "system", $"{Context.ConnectionId} joined the conversation");
-            return base.OnConnectedAsync();
+            Console.WriteLine($"{Context.ConnectionId} connected");
+            await Clients.All.SendAsync("broadcastMessage", "system", $"{Context.ConnectionId} joined the conversation");
+            await base.OnConnectedAsync();
         }
 
-        public override Task OnDisconnectedAsync(System.Exception exception)
+        public override async Task OnDisconnectedAsync(System.Exception e)
         {
-            Clients.All.SendAsync("broadcastMessage", "system", $"{Context.ConnectionId} left the conversation");
-            return base.OnDisconnectedAsync(exception);
+            Console.WriteLine($"Disconnected {e?.Message} {Context.ConnectionId}");
+            await Clients.All.SendAsync("broadcastMessage", "system", $"{Context.ConnectionId} left the conversation");
+            await base.OnDisconnectedAsync(e);
         }
     }
 }
