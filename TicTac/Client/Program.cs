@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.SignalR.Client; 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,6 +27,15 @@ namespace TicTac.Client
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("TicTac.ServerAPI"));
 
             builder.Services.AddApiAuthorization();
+
+            builder.Services.AddSingleton<HubConnection>(sp =>
+            {
+                var navigationManager = sp.GetRequiredService<NavigationManager>();
+                return new HubConnectionBuilder()
+                        .WithUrl(navigationManager.ToAbsoluteUri("/tictachub"))
+                        .WithAutomaticReconnect()
+                        .Build();
+            });
 
             await builder.Build().RunAsync();
         }

@@ -1,14 +1,22 @@
 ﻿@using TicTac.Shared
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.SignalR.Client;
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient Http
+@inject HubConnection HubConnection
 
 <AuthorizeView>
     <Authorized>
         <div><span>@context.User.Identity.Name</span> vs Player2</div>
         <p>&nbsp;</p>
         <button @onclick="StartGame">Start</button>
+        <ul id="messagesList">
+            @foreach (var message in messages)
+            {
+                <li>@message</li>
+            }
+        </ul>
 
         <div class="board">
             @for (int x = 0; x < 3; x++)
@@ -24,9 +32,6 @@
                 </div>
             }
         </div>
-        <div>ololo</div>
-        <div>@_returned</div>
-        <div>uwawa</div>
     </Authorized>
     <NotAuthorized>
         <LoginDisplay />
@@ -36,22 +41,36 @@
 @code {
     GameBoard board = new GameBoard();
     private string _name;
-    private string _err;
-    private string _returned;
+    private string _hubUrl;
+    private HubConnection _hubConnection;
+    private List<string> messages = new List<String>();
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity.IsAuthenticated)
-            _name = user.Identity.Name;
+        //var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        //var user = authState.User;
+        //if (user.Identity.IsAuthenticated)
+        //    _name = user.Identity.Name;
 
         //_returned = (await Http.GetFromJsonAsync<Psst>("toe")).Name;
+
+        HubConnection.On<string>("StartGame", message =>
+        {
+            messages.Add(message);
+            StateHasChanged();
+        });
+
+        await HubConnection.StartAsync();
     }
 
-    public void StartGame()
+    public async Task StartGame()
     {
-        Console.WriteLine("trying");
+        Console.WriteLine("start game");
+
+        var res = await Http.GetFromJsonAsync<Psst>("toe/get");
+        Console.WriteLine(res.Name);
+
+        await Http.GetAsync("toe/fire");
+
     }
 }
