@@ -56,6 +56,7 @@ namespace TicTac.Server
 
             services.AddSignalR();
             services.AddSingleton<ITicTacHub, TicTacHub>();
+            services.AddSingleton<IToeService, ToeService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

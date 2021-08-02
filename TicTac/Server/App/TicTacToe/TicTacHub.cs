@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace TicTac.Server.App.TicTacToe
 {
+    public interface ITicTacHub
+    {
+        Task Register(string userId, string userName);
+        Task Start(string x, string o);
+    }
+
     public class TicTacHub : Hub, ITicTacHub
     {
         readonly IHubContext<TicTacHub> _ctx;
@@ -15,9 +21,14 @@ namespace TicTac.Server.App.TicTacToe
             _ctx = ctx;
         }
 
-        public async Task StartGame()
+        public async Task Register(string userId, string userName)
         {
-            await _ctx.Clients.All.SendAsync("StartGame", "my important message");
+            await _ctx.Clients.All.SendAsync("Register", $"{userName} is ready");
+        }
+
+        public async Task Start(string x, string o)
+        {
+            await _ctx.Clients.All.SendAsync("GameStart", x, o);
         }
 
         public override async Task OnConnectedAsync()

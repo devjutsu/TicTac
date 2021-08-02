@@ -23,45 +23,30 @@ namespace TicTac.Server.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ITicTacHub _hub;
+        private readonly IToeService _game;
 
         public ToeController(ILogger<ToeController> logger,
                                 UserManager<ApplicationUser> userManager,
                                 SignInManager<ApplicationUser> signInManager,
-                                ITicTacHub hub)
+                                ITicTacHub hub,
+                                IToeService game)
         {
             _logger = logger;
             _userManager = userManager;
             _signInManager = signInManager;
             _hub = hub;
+            _game = game;
         }
 
-        [HttpGet("get")]
-        public async Task<Psst> Get()
+        [HttpGet("register")]
+        public async Task Register()
         {
-            _logger.LogInformation("Got it.");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var userName = (await _userManager.FindByIdAsync(userId)).UserName;
+            _logger.LogInformation($"Ready for Game - {userName} ({userId})");
 
-            //var id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-
-            //var name = (await _userManager.FindByIdAsync(id)).UserName;
-
-            //var user = await _userManager.GetUserAsync(HttpContext.User);
-            //var bz = user?.Email;
-
-            return new Psst() { Name = "sampl" };
-        }
-
-        [HttpGet("fire")]
-        public async Task Fire()
-        {
-            _logger.LogInformation("Start Game.");
-            await _hub.StartGame();
-        }
-
-        public void ReadyToStart()
-        {
-            // check if 2 players are ready
-            // if not ready, return to wait
-            // if both players ready, create and return game instance
+            _game.RegisterInGame(userId);
+            await _hub.Register(userId, userName);
         }
     }
 }
