@@ -38,15 +38,15 @@ namespace TicTac.Server.Controllers
             _game = game;
         }
 
-        [HttpGet("register")]
-        public async Task Register()
+        [HttpGet("register/{id}")]
+        public async Task Register(string id)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             var userName = (await _userManager.FindByIdAsync(userId)).UserName;
-            _logger.LogInformation($"Ready for Game - {userName} ({userId})");
+            _logger.LogInformation($"toe/register/{id} for {userName} ({userId}) ");
 
             _game.RegisterInGame(userId);
-            await _hub.Register(userId, userName);
+            await _hub.Register(id, userId, userName);
         }
     }
 }
