@@ -27,12 +27,13 @@ namespace TicTac.Server.App.TicTacToe
 
         public void RegisterInGame(string userId)
         {
-            _queue.Remove(userId);
-            var opponentId = _queue.FirstOrDefault();
-            _queue.Remove(opponentId);
-            if(opponentId != null)
+            var opponentId = _queue.Where(o => o != userId).FirstOrDefault();
+            if (opponentId == null)
+                _queue.Add(userId);
+            else
             {
                 StartGame(userId, opponentId);
+                _queue.Remove(opponentId);
             }
         }
 

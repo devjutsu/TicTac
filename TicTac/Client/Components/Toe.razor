@@ -10,7 +10,7 @@
     <Authorized>
         <div>@context.User.Identity.Name</div>
         <p>&nbsp;</p>
-        <button @onclick="Register" disabled="@(!IsConnected || _registered)">Ready!</button>
+        <button @onclick="Register" disabled="@(!IsConnected)">Ready!</button> @*|| _registered*@
         @if(_registered && !_started)
         {
             <div>Waiting for game to start...</div>
@@ -29,6 +29,7 @@
     private bool _registered = false;
     private bool _started = false;
     private bool IsConnected => HubConnection.State == HubConnectionState.Connected;
+    private string _connectionId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,13 +47,21 @@
             StateHasChanged();
         });
 
+        HubConnection.On<string, string>("broadcastMessage", (from, message) =>
+        {
+            Console.WriteLine($"From: {from}, Message: {message}");
+        });
+
+        _connectionId = HubConnection.ConnectionId;
+        Console.WriteLine(_connectionId);
+
         await HubConnection.StartAsync();
     }
 
     public async Task Register()
     {
-        Console.WriteLine("Registering...");
-        await Http.GetAsync("toe/register");
+        Console.WriteLine($"Registering... {HubConnection.ConnectionId}");
+        await Http.GetAsync($"toe/register/{HubConnection.ConnectionId}");
     }
 
     public async ValueTask DisposeAsync()

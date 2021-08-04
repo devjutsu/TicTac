@@ -12,6 +12,8 @@ using System.Linq;
 using TicTac.Server.Data;
 using TicTac.Server.Models;
 using TicTac.Server.App.TicTacToe;
+using Microsoft.AspNet.SignalR.Client.Http;
+using Microsoft.AspNetCore.SignalR;
 
 namespace TicTac.Server
 {
@@ -92,6 +94,24 @@ namespace TicTac.Server
                 endpoints.MapHub<TicTacHub>("/tictachub");
                 endpoints.MapFallbackToFile("index.html");
             });
+        }
+
+        public interface IUserIdProvider
+        {
+            string GetUserId(IRequest request);
+        }
+        public class CustomUserIdProvider : IUserIdProvider
+        {
+            public string GetUserId(IRequest request)
+            {
+                // your logic to fetch a user identifier goes here.
+
+                // for example:
+
+                //var userId = MyCustomUserClass.FindUserId(request.User.Identity.Name);
+                //return userId.ToString();
+                return "";
+            }
         }
     }
 }
