@@ -30,16 +30,19 @@ namespace TicTac.Server.App.TicTacToe
         {
             await _ctx.Clients.Client(userConnectionId).SendAsync("Register", $"{userName} is ready");
 
-            if (!_clients.Contains((userName, userConnectionId)))
-                _clients.Add((userName, userConnectionId));
+            if (!_clients.Contains((userId, userConnectionId)))
+                _clients.Add((userId, userConnectionId));
         }
 
         public async Task Start(string x, string o)
         {
-            var test = _clients.Where(o => o.userId == x).First();
+            var xId = _clients.Where(u => u.userId == x).First();
+            var oId = _clients.Where(u => u.userId == o).First();
 
-            await _ctx.Clients.Client(test.connectionId).SendAsync("GameStart", x, o);
-            //await _ctx.Clients.All.SendAsync("GameStart", x, o);
+            //await _ctx.Clients.Client(xId.connectionId).SendAsync("GameStart", x, o);
+            //await _ctx.Clients.Client(oId.connectionId).SendAsync("GameStart", x, o);
+
+            await _ctx.Clients.All.SendAsync("GameStart", x, o);
         }
 
         public override async Task OnConnectedAsync()
@@ -53,7 +56,6 @@ namespace TicTac.Server.App.TicTacToe
         public override async Task OnDisconnectedAsync(System.Exception e)
         {
             Console.WriteLine($"Disconnected {e?.Message} {Context.ConnectionId}");
-            //await Clients.All.SendAsync("broadcastMessage", "system", $"{Context.ConnectionId} left the conversation");
             var itemToRemove = _clients.FirstOrDefault(o => o.connectionId == Context.ConnectionId);
             _clients.Remove(itemToRemove);
             await base.OnDisconnectedAsync(e);

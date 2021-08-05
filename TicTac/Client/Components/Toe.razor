@@ -10,14 +10,27 @@
     <Authorized>
         <div>@context.User.Identity.Name</div>
         <p>&nbsp;</p>
-        <button @onclick="Register" disabled="@(!IsConnected)">Ready!</button> @*|| _registered*@
-        @if(_registered && !_started)
+        <button @onclick="Register" disabled="@(!IsConnected || _registered)">Ready!</button>
+        @if (_registered && !_started)
         {
             <div>Waiting for game to start...</div>
         }
-        else if(_started)
+        else if (_started)
         {
-            <div>board</div>
+            <div class="board">
+                @for (int x = 0; x < 3; x++)
+                {
+                    <div class="board-column">
+                        @for (int y = 0; y < 3; y++)
+                        {
+                            <div class="gamepiece"
+                     @onclick="@(() => _board.PieceClicked(x, y))">
+                                @x @y
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
         }
     </Authorized>
     <NotAuthorized>
@@ -26,8 +39,10 @@
 </AuthorizeView>
 
 @code {
+    GameBoard _board;
     private bool _registered = false;
     private bool _started = false;
+    private string _opponent;
     private bool IsConnected => HubConnection.State == HubConnectionState.Connected;
     private string _connectionId;
 
@@ -44,6 +59,13 @@
         {
             Console.WriteLine($"X: {x}, O: {o}");
             _started = true;
+            _opponent = o;
+            _board = new GameBoard();
+            StateHasChanged();
+        });
+
+        HubConnection.On<string, string>("Move", (player, mov) =>
+        {
             StateHasChanged();
         });
 

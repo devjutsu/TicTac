@@ -45,8 +45,8 @@ namespace TicTac.Server.Controllers
             var userName = (await _userManager.FindByIdAsync(userId)).UserName;
             _logger.LogInformation($"toe/register/{id} for {userName} ({userId}) ");
 
-            _game.RegisterInGame(userId);
             await _hub.Register(id, userId, userName);
+            _game.RegisterInGame(userId);
         }
     }
 }
