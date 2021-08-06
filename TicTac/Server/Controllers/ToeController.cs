@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using TicTac.Server.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using TicTac.Server.App.TicTacToe;
+using System.Net.Http;
 
 namespace TicTac.Server.Controllers
 {
@@ -46,7 +47,17 @@ namespace TicTac.Server.Controllers
             _logger.LogInformation($"toe/register/{id} for {userName} ({userId}) ");
 
             await _hub.Register(id, userId, userName);
-            _game.RegisterInGame(userId);
+            _game.RegisterInGame(userName);
+        }
+
+        [HttpPost("move")]
+        public async Task<HttpResponseMessage> Move(PieceClick click)
+        {
+            _logger.LogInformation($"{click.Player} ({click.Style}) clicked ({click.X}, {click.Y})");
+            await _game.Move(click);
+            return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
         }
     }
+
+    
 }

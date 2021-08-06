@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using TicTac.Shared;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace TicTac.Server.App.TicTacToe
@@ -13,37 +14,47 @@ namespace TicTac.Server.App.TicTacToe
     {
         Task Register(string userConnectionId, string userId, string userName);
         Task Start(string x, string o);
+        Task NotifyMove(string opponent, PieceClick click);
     }
 
     public class TicTacHub : Hub, ITicTacHub
     {
         readonly IHubContext<TicTacHub> _ctx;
-        public List<(string userId, string connectionId)> _clients { get; set; }
+        public List<(string userName, string connectionId)> _clients { get; set; }
 
         public TicTacHub(IHubContext<TicTacHub> ctx)
         {
             _ctx = ctx;
-            _clients = new List<(string userId,string connectionId)>();
+            _clients = new List<(string userName, string connectionId)>();
         }
 
         public async Task Register(string userConnectionId, string userId, string userName)
         {
             await _ctx.Clients.Client(userConnectionId).SendAsync("Register", $"{userName} is ready");
 
-            if (!_clients.Contains((userId, userConnectionId)))
-                _clients.Add((userId, userConnectionId));
+            if (!_clients.Contains((userName, userConnectionId)))
+            {
+                _clients.RemoveAll(o => o.userName == userName);
+                _clients.Add((userName, userConnectionId));
+            }
         }
 
-        public async Task Start(string x, string o)
+        public async Task Start(string xPlayer, string oPlayer)
         {
-            var xId = _clients.Where(u => u.userId == x).First();
-            var oId = _clients.Where(u => u.userId == o).First();
+            var xId = _clients.Where(u => u.userName == xPlayer).First();
+            await _ctx.Clients.Client(xId.connectionId).SendAsync("GameStart", xPlayer, oPlayer, true);
 
-            //await _ctx.Clients.Client(xId.connectionId).SendAsync("GameStart", x, o);
-            //await _ctx.Clients.Client(oId.connectionId).SendAsync("GameStart", x, o);
-
-            await _ctx.Clients.All.SendAsync("GameStart", x, o);
+            var oId = _clients.Where(u => u.userName == oPlayer).First();
+            await _ctx.Clients.Client(oId.connectionId).SendAsync("GameStart", oPlayer, xPlayer, false);
         }
+
+        public async Task NotifyMove(string opponent, PieceClick click)
+        {
+            var connectionId = _clients.First(o => o.userName == opponent).connectionId;
+
+            await _ctx.Clients.Client(connectionId).SendAsync("NotifyMove", click);
+        }
+
 
         public override async Task OnConnectedAsync()
         {
