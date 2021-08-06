@@ -8,25 +8,44 @@
 
 <AuthorizeView>
     <Authorized>
-        <div>@context.User.Identity.Name</div>
+        @if (_started)
+        {
+            <div>@context.User.Identity.Name vs. @_opponentName</div>
+        }
+        else
+        {
+            <div>@context.User.Identity.Name</div>
+        }
         <p>&nbsp;</p>
-        <button @onclick="Register" disabled="@(!IsConnected || _registered)">Ready!</button>
+        <button @onclick="Register" disabled="@(!IsConnected || _registered)" class="btn btn-primary">Ready!</button>
+        <p>&nbsp;</p>
+
         @if (_registered && !_started)
         {
             <div>Waiting for game to start...</div>
         }
         else if (_started)
         {
+            @if (_myTurn)
+            {
+                <h2>@_style Your Turn!</h2>
+            }
+            else
+            {
+                <h2>@_style Wait...</h2>
+            }
+            <p>&nbsp;</p>
+
             <div class="board">
-                @for (int x = 0; x < 3; x++)
+                @for (int i = 0; i < 3; i++)
                 {
+                    int x = i;
                     <div class="board-column">
-                        @for (int y = 0; y < 3; y++)
+                        @for (int j = 0; j < 3; j++)
                         {
-                            <div class="gamepiece"
-                     @onclick="@(() => _board.PieceClicked(x, y))">
-                                @x @y
-                            </div>
+                            int y = j;
+                            <div class="gamepiece @_board.Board[i,j].ToString()" 
+                                        @onclick="@(() => PieceClicked(x, y))" />
                         }
                     </div>
                 }
@@ -42,9 +61,14 @@
     GameBoard _board;
     private bool _registered = false;
     private bool _started = false;
-    private string _opponent;
-    private bool IsConnected => HubConnection.State == HubConnectionState.Connected;
+    private string _myName;
+    private string _opponentName;
+    private bool _amiFirst;
+    private bool _myTurn = false;
     private string _connectionId;
+    private PieceStyle _style = PieceStyle.Blank;
+    private PieceStyle _opponentStyle => _style == PieceStyle.X ? PieceStyle.O : PieceStyle.X;
+    private bool IsConnected => HubConnection.State == HubConnectionState.Connected;
 
     protected override async Task OnInitializedAsync()
     {
@@ -55,23 +79,41 @@
             StateHasChanged();
         });
 
-        HubConnection.On<string, string>("GameStart", (x, o) =>
+        HubConnection.On<string, string, bool>("GameStart", (myName, opponentName, first) =>
         {
-            Console.WriteLine($"X: {x}, O: {o}");
             _started = true;
-            _opponent = o;
+            _myName = myName;
+            _opponentName = opponentName;
+            _amiFirst = first;
+            if (first)
+            {
+                _myTurn = true;
+                _style = PieceStyle.X;
+            }
+            else
+            {
+                _style = PieceStyle.O;
+            }
             _board = new GameBoard();
-            StateHasChanged();
-        });
-
-        HubConnection.On<string, string>("Move", (player, mov) =>
-        {
             StateHasChanged();
         });
 
         HubConnection.On<string, string>("broadcastMessage", (from, message) =>
         {
             Console.WriteLine($"From: {from}, Message: {message}");
+        });
+
+        HubConnection.On<PieceClick>("NotifyMove", (click) =>
+        {
+            Console.WriteLine($"{click.Style} clicked ({click.X},{click.Y}) ");
+            _board.PieceClicked(click.X, click.Y, _opponentStyle);
+            if(_board.IsFinished)
+            {
+            
+            }
+
+            _myTurn = true;
+            StateHasChanged();
         });
 
         _connectionId = HubConnection.ConnectionId;
@@ -91,6 +133,30 @@
         if (HubConnection is not null)
         {
             await HubConnection.DisposeAsync();
+        }
+    }
+
+    public async Task PieceClicked(int x, int y)
+    {
+        if (_myTurn)
+        {
+            if (_board.PieceClicked(x, y, _style))
+            {
+                await Http.PostAsJsonAsync<PieceClick>("toe/move", new PieceClick
+                {
+                    X = x,
+                    Y = y,
+                    Player = _myName,
+                    Style = _style
+                });
+                if(_board.IsFinished)
+                {
+                    
+                }
+
+                _myTurn = false;
+                StateHasChanged();
+            }
         }
     }
 }
