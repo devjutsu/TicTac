@@ -8,17 +8,16 @@
 
 <AuthorizeView>
     <Authorized>
-        @if (_started)
-        {
-            <div>@context.User.Identity.Name vs. @_opponentName</div>
-        }
-        else
-        {
-            <div>@context.User.Identity.Name</div>
-        }
+        <div>@ArePlaying</div>
+        @*<div>@context.User.Identity.Name</div>*@
         <p>&nbsp;</p>
-        <button @onclick="Register" disabled="@(!IsConnected || _registered)" class="btn btn-primary">Ready!</button>
-        <p>&nbsp;</p>
+
+        @* Register *@
+        @if (!_started || _finished)
+        {
+            <button @onclick="Register" disabled="@(!IsConnected || _registered)" class="btn btn-primary">Ready!</button>
+            <p>&nbsp;</p>
+        }
 
         @if (_registered && !_started)
         {
@@ -26,16 +25,21 @@
         }
         else if (_started)
         {
-            @if (_myTurn)
+            @* Turn *@
+            @if (!_finished)
             {
-                <h2>@_style Your Turn!</h2>
+                @if (_myTurn)
+                {
+                    <h2>@_style Your Turn!</h2>
+                }
+                else
+                {
+                    <h2>@_style Wait...</h2>
+                }
+                <p>&nbsp;</p>
             }
-            else
-            {
-                <h2>@_style Wait...</h2>
-            }
-            <p>&nbsp;</p>
 
+            @* Board *@
             <div class="board">
                 @for (int i = 0; i < 3; i++)
                 {
@@ -44,12 +48,29 @@
                         @for (int j = 0; j < 3; j++)
                         {
                             int y = j;
-                            <div class="gamepiece @_board.Board[i,j].ToString()" 
-                                        @onclick="@(() => PieceClicked(x, y))" />
+                            <div class="gamepiece @_board.Board[i,j].ToString()" @onclick="@(() => PieceClicked(x, y))" />
                         }
                     </div>
                 }
             </div>
+
+            @* Finished *@
+            @if (_finished)
+            {
+                <p>&nbsp;</p>
+                @if (_board.Winner == PieceStyle.Blank)
+                {
+                    <h2>Draw!</h2>
+                }
+                else if (_board.Winner == _style)
+                {
+                    <h2>You Won!</h2>
+                }
+                else
+                {
+                    <h2>You Lost!</h2>
+                }
+            }
         }
     </Authorized>
     <NotAuthorized>
@@ -61,6 +82,7 @@
     GameBoard _board;
     private bool _registered = false;
     private bool _started = false;
+    private bool _finished = false;
     private string _myName;
     private string _opponentName;
     private bool _amiFirst;
@@ -69,6 +91,7 @@
     private PieceStyle _style = PieceStyle.Blank;
     private PieceStyle _opponentStyle => _style == PieceStyle.X ? PieceStyle.O : PieceStyle.X;
     private bool IsConnected => HubConnection.State == HubConnectionState.Connected;
+    private string ArePlaying => _started ? $"{_myName} vs. {_opponentName}" : $"{_myName}";
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,6 +99,8 @@
         {
             Console.WriteLine($"{message}");
             _registered = true;
+            _started = false;
+            _finished = false;
             StateHasChanged();
         });
 
@@ -92,8 +117,10 @@
             }
             else
             {
+                _myTurn = false;
                 _style = PieceStyle.O;
             }
+            _registered = false;
             _board = new GameBoard();
             StateHasChanged();
         });
@@ -107,11 +134,7 @@
         {
             Console.WriteLine($"{click.Style} clicked ({click.X},{click.Y}) ");
             _board.PieceClicked(click.X, click.Y, _opponentStyle);
-            if(_board.IsFinished)
-            {
-            
-            }
-
+            _finished = _board.IsFinished;
             _myTurn = true;
             StateHasChanged();
         });
@@ -124,7 +147,9 @@
 
     public async Task Register()
     {
-        Console.WriteLine($"Registering... {HubConnection.ConnectionId}");
+        _registered = true;
+        _started = false;
+        _finished = false;
         await Http.GetAsync($"toe/register/{HubConnection.ConnectionId}");
     }
 
@@ -138,7 +163,7 @@
 
     public async Task PieceClicked(int x, int y)
     {
-        if (_myTurn)
+        if (_myTurn && !_finished)
         {
             if (_board.PieceClicked(x, y, _style))
             {
@@ -149,10 +174,7 @@
                     Player = _myName,
                     Style = _style
                 });
-                if(_board.IsFinished)
-                {
-                    
-                }
+                _finished = _board.IsFinished;
 
                 _myTurn = false;
                 StateHasChanged();
