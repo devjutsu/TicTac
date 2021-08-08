@@ -1,0 +1,25 @@
+﻿@using TicTac.Shared
+
+@if (!started || finished)
+{
+    <button @onclick="InvokeRegister" disabled="@(!connected || registered)" class="btn btn-primary">Ready!</button>
+    <p>&nbsp;</p>
+}
+
+@code {
+    [Parameter]
+    public EventCallback Register { get; set; }
+    [Parameter]
+    public bool started { get; set; }
+    [Parameter]
+    public bool finished { get; set; }
+    [Parameter]
+    public bool connected { get; set; }
+    [Parameter]
+    public bool registered { get; set; }
+
+    private async Task InvokeRegister()
+    {
+        await Register.InvokeAsync();
+    }
+}

@@ -1,0 +1,27 @@
+﻿@using TicTac.Shared
+
+@if (finished)
+            {
+                <p>&nbsp;</p>
+                @if (board.Winner == PieceStyle.Blank)
+                {
+                    <h2>Draw!</h2>
+                }
+                else if (board.Winner == style)
+                {
+                    <h2>You Won!</h2>
+                }
+                else
+                {
+                    <h2>You Lost!</h2>
+                }
+            }
+
+@code {
+    [Parameter]
+    public GameBoard board { get; set; }
+    [Parameter]
+    public bool finished { get; set; }
+    [Parameter]
+    public PieceStyle style { get; set; }
+}

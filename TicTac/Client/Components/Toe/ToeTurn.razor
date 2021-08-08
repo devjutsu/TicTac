@@ -1,0 +1,23 @@
+﻿@using TicTac.Shared
+
+@if (!finished)
+{
+    @if (myTurn)
+    {
+        <h2>@style Your Turn!</h2>
+    }
+    else
+    {
+        <h2>@style Wait...</h2>
+    }
+    <p>&nbsp;</p>
+}
+
+@code {
+    [Parameter]
+    public bool myTurn { get; set; }
+    [Parameter]
+    public bool finished { get; set; }
+    [Parameter]
+    public PieceStyle style { get; set; }
+}
