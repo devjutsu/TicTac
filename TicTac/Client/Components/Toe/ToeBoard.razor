@@ -1,0 +1,28 @@
+﻿@using TicTac.Shared
+
+<div class="board">
+    @for (int i = 0; i < 3; i++)
+    {
+        int x = i;
+        <div class="board-column">
+            @for (int j = 0; j < 3; j++)
+            {
+                int y = j;
+                <div class="gamepiece @board.Board[i,j].ToString()" @onclick="@(() => InvokePieceClicked(x, y))" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public GameBoard board { get; set; }
+
+    [Parameter]
+    public Action<int,int> CallPieceClicked { get; set; }
+
+    private void InvokePieceClicked(int x, int y)
+    {
+        CallPieceClicked?.Invoke(x, y);
+    }
+}

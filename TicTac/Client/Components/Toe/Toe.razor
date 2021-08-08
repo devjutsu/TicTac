@@ -12,12 +12,12 @@
         @*<div>@context.User.Identity.Name</div>*@
         <p>&nbsp;</p>
 
-        @* Register *@
-        @if (!_started || _finished)
-        {
-            <button @onclick="Register" disabled="@(!IsConnected || _registered)" class="btn btn-primary">Ready!</button>
-            <p>&nbsp;</p>
-        }
+        <ToeRegister started=_started 
+                        finished=_finished
+                        connected=IsConnected
+                        registered=_registered
+                        Register="@Register" />
+
 
         @if (_registered && !_started)
         {
@@ -25,52 +25,9 @@
         }
         else if (_started)
         {
-            @* Turn *@
-            @if (!_finished)
-            {
-                @if (_myTurn)
-                {
-                    <h2>@_style Your Turn!</h2>
-                }
-                else
-                {
-                    <h2>@_style Wait...</h2>
-                }
-                <p>&nbsp;</p>
-            }
-
-            @* Board *@
-            <div class="board">
-                @for (int i = 0; i < 3; i++)
-                {
-                    int x = i;
-                    <div class="board-column">
-                        @for (int j = 0; j < 3; j++)
-                        {
-                            int y = j;
-                            <div class="gamepiece @_board.Board[i,j].ToString()" @onclick="@(() => PieceClicked(x, y))" />
-                        }
-                    </div>
-                }
-            </div>
-
-            @* Finished *@
-            @if (_finished)
-            {
-                <p>&nbsp;</p>
-                @if (_board.Winner == PieceStyle.Blank)
-                {
-                    <h2>Draw!</h2>
-                }
-                else if (_board.Winner == _style)
-                {
-                    <h2>You Won!</h2>
-                }
-                else
-                {
-                    <h2>You Lost!</h2>
-                }
-            }
+            <ToeTurn finished=_finished myTurn=_myTurn style=_style />
+            <ToeBoard board=_board CallPieceClicked="@(async (arg,arh) => await PieceClicked(arg,arh))" />
+            <ToeFinished board=_board style=_style finished=_finished />
         }
     </Authorized>
     <NotAuthorized>
@@ -95,6 +52,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine(_started);
+        Console.WriteLine(_finished);
         HubConnection.On<string>("Register", message =>
         {
             Console.WriteLine($"{message}");
